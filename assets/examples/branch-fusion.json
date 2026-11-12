@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "page": {
+    "width": 35,
+    "height": 16
+  },
+  "title": "分支融合流程 · 原生公式示例",
+  "texts": [
+    {
+      "id": "subtitle",
+      "text": "示例图：验证根号、分式、旁路与汇合，不代表新的实验结果",
+      "x": 17.5,
+      "y": 1.65,
+      "w": 32,
+      "h": 0.6
+    },
+    {
+      "id": "footnote",
+      "text": "仅示范 V > 0 的比例关系；新图中的条件和参数按实际依据填写。",
+      "x": 17.5,
+      "y": 14.8,
+      "w": 32,
+      "h": 0.7
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "text": "输入图像",
+      "x": 3,
+      "y": 7.8,
+      "w": 4,
+      "formula": {
+        "width": 6,
+        "lines": [
+          "I ∈ [0, 1]"
+        ]
+      }
+    },
+    {
+      "id": "bright",
+      "text": "提亮分支",
+      "x": 10,
+      "y": 5,
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "parts": [
+              {
+                "text": "V_{A} = "
+              },
+              {
+                "sqrt": "V"
+              }
+            ],
+            "size": 26,
+            "height": 1.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "dark",
+      "text": "压亮分支",
+      "x": 10,
+      "y": 10.4,
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "parts": [
+              {
+                "text": "V_{B} = 1 − "
+              },
+              {
+                "sqrt": "1 − V"
+              }
+            ],
+            "size": 26,
+            "height": 1.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "a",
+      "text": "恢复彩色图",
+      "x": 17,
+      "y": 5,
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "parts": [
+              {
+                "text": "A = I ×"
+              },
+              {
+                "fraction": [
+                  "V_{A}",
+                  "V"
+                ]
+              }
+            ],
+            "size": 26,
+            "height": 1.0
+          },
+          {
+            "text": "保持原颜色比例",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "b",
+      "text": "恢复彩色图",
+      "x": 17,
+      "y": 10.4,
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "parts": [
+              {
+                "text": "B = I ×"
+              },
+              {
+                "fraction": [
+                  "V_{B}",
+                  "V"
+                ]
+              }
+            ],
+            "size": 26,
+            "height": 1.0
+          },
+          {
+            "text": "保持原颜色比例",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "mix",
+      "text": "加权融合",
+      "x": 25,
+      "y": 7.8,
+      "formula": {
+        "width": 8,
+        "lines": [
+          "F = w_{I} I + w_{A} A + w_{B} B"
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "text": "转为整数",
+      "x": 31.5,
+      "y": 7.8,
+      "w": 4,
+      "formula": {
+        "width": 4.5,
+        "lines": [
+          {
+            "text": "转为 0～255 整数",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "ia",
+      "from": "input",
+      "to": "bright",
+      "via": [
+        [
+          6,
+          7.8
+        ],
+        [
+          6,
+          5
+        ]
+      ]
+    },
+    {
+      "id": "ib",
+      "from": "input",
+      "to": "dark",
+      "via": [
+        [
+          6,
+          7.8
+        ],
+        [
+          6,
+          10.4
+        ]
+      ]
+    },
+    {
+      "id": "aa",
+      "from": "bright",
+      "to": "a"
+    },
+    {
+      "id": "bb",
+      "from": "dark",
+      "to": "b"
+    },
+    {
+      "id": "am",
+      "from": "a",
+      "to": "mix",
+      "to_offset": -0.3,
+      "via": [
+        [
+          21,
+          5
+        ],
+        [
+          21,
+          7.5
+        ]
+      ]
+    },
+    {
+      "id": "bm",
+      "from": "b",
+      "to": "mix",
+      "to_offset": 0.3,
+      "via": [
+        [
+          20.6,
+          10.4
+        ],
+        [
+          20.6,
+          8.1
+        ]
+      ]
+    },
+    {
+      "id": "direct",
+      "from": "input",
+      "to": "mix",
+      "from_port": "t",
+      "to_port": "t",
+      "via": [
+        [
+          3,
+          3
+        ],
+        [
+          25,
+          3
+        ]
+      ],
+      "label": {
+        "text": "原图旁路",
+        "x": 14,
+        "y": 3,
+        "w": 3
+      }
+    },
+    {
+      "id": "mo",
+      "from": "mix",
+      "to": "output"
+    }
+  ],
+  "junctions": [
+    {
+      "x": 6,
+      "y": 7.8
+    }
+  ]
+}

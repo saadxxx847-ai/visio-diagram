@@ -1,0 +1,313 @@
+{
+  "version": 1,
+  "page": {
+    "width": 33,
+    "height": 20
+  },
+  "title": "分层系统架构 · 容器与跨层路由示例",
+  "texts": [
+    {
+      "id": "subtitle",
+      "text": "实线：请求或数据　虚线：调度；跨线拱桥表示不相连",
+      "x": 16.5,
+      "y": 1.65,
+      "w": 30,
+      "h": 0.6
+    }
+  ],
+  "regions": [
+    {
+      "id": "front",
+      "x": 16.5,
+      "y": 4.5,
+      "w": 31,
+      "h": 4.5,
+      "title": "01  接入层",
+      "color": "green"
+    },
+    {
+      "id": "compute",
+      "x": 16.5,
+      "y": 10.5,
+      "w": 31,
+      "h": 5,
+      "title": "02  处理层",
+      "color": "blue"
+    },
+    {
+      "id": "data",
+      "x": 16.5,
+      "y": 16.4,
+      "w": 31,
+      "h": 4.8,
+      "title": "03  数据层",
+      "color": "purple"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "client",
+      "text": "客户端",
+      "x": 5,
+      "y": 4.5,
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "text": "提交请求",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "gateway",
+      "text": "网关",
+      "x": 15,
+      "y": 4.5,
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "text": "校验与路由",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "service",
+      "text": "应用服务",
+      "x": 25,
+      "y": 4.5,
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "text": "执行同步任务",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "queue",
+      "text": "任务队列",
+      "x": 5,
+      "y": 10.5,
+      "color": "blue",
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "text": "暂存待处理任务",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "scheduler",
+      "text": "调度",
+      "x": 15,
+      "y": 10.5,
+      "color": "blue",
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "text": "分配执行资源",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "worker",
+      "text": "计算节点",
+      "x": 25,
+      "y": 10.5,
+      "color": "blue",
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "text": "生成处理结果",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "cache",
+      "text": "缓存",
+      "x": 15,
+      "y": 16.5,
+      "color": "purple",
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "text": "保存可复用状态",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    },
+    {
+      "id": "storage",
+      "text": "结果存储",
+      "x": 25,
+      "y": 16.5,
+      "color": "purple",
+      "formula": {
+        "width": 6,
+        "lines": [
+          {
+            "text": "持久化结果",
+            "size": 22,
+            "height": 0.55
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "cg",
+      "from": "client",
+      "to": "gateway"
+    },
+    {
+      "id": "gs",
+      "from": "gateway",
+      "to": "service"
+    },
+    {
+      "id": "gq",
+      "from": "gateway",
+      "to": "queue",
+      "from_port": "t",
+      "to_port": "t",
+      "via": [
+        [
+          15,
+          3.5
+        ],
+        [
+          9,
+          3.5
+        ],
+        [
+          9,
+          9.2
+        ],
+        [
+          5,
+          9.2
+        ]
+      ],
+      "bridges": [
+        {
+          "x": 9,
+          "y": 4.5
+        }
+      ]
+    },
+    {
+      "id": "qs",
+      "from": "queue",
+      "to": "scheduler",
+      "color": "blue"
+    },
+    {
+      "id": "sw",
+      "from": "scheduler",
+      "to": "worker",
+      "color": "blue",
+      "dashed": true
+    },
+    {
+      "id": "aw",
+      "from": "service",
+      "to": "worker",
+      "to_port": "r",
+      "via": [
+        [
+          29,
+          4.5
+        ],
+        [
+          29,
+          10.5
+        ]
+      ],
+      "color": "blue"
+    },
+    {
+      "id": "ws",
+      "from": "worker",
+      "to": "storage",
+      "to_port": "r",
+      "via": [
+        [
+          30.5,
+          10.5
+        ],
+        [
+          30.5,
+          16.5
+        ]
+      ],
+      "color": "purple"
+    },
+    {
+      "id": "sc",
+      "from": "storage",
+      "to": "cache",
+      "from_port": "l",
+      "to_port": "r",
+      "color": "purple"
+    },
+    {
+      "id": "state",
+      "from": "scheduler",
+      "to": "cache",
+      "from_port": "t",
+      "to_port": "t",
+      "via": [
+        [
+          15,
+          9.1
+        ],
+        [
+          20,
+          9.1
+        ],
+        [
+          20,
+          15
+        ],
+        [
+          15,
+          15
+        ]
+      ],
+      "color": "orange",
+      "dashed": true,
+      "bridges": [
+        {
+          "x": 20,
+          "y": 10.5
+        }
+      ]
+    }
+  ]
+}

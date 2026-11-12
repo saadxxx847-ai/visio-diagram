@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "page": {
+    "width": 37,
+    "height": 17
+  },
+  "title": "带跳跃连接的网络结构 · 布局示例",
+  "texts": [
+    {
+      "id": "subtitle",
+      "text": "模块级结构示意；张量尺寸仅用于展示标注方式",
+      "x": 18.5,
+      "y": 1.65,
+      "w": 34,
+      "h": 0.6
+    },
+    {
+      "id": "footer",
+      "text": "跳跃连接与主干分开走线；操作、通道数和尺寸应按具体模型核对。",
+      "x": 18.5,
+      "y": 15.5,
+      "w": 34,
+      "h": 0.7
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "text": "输入",
+      "x": 3,
+      "y": 6,
+      "color": "blue",
+      "shape": "ellipse",
+      "w": 3.5,
+      "h": 1.1,
+      "formula": {
+        "width": 6,
+        "lines": [
+          "H × W × 3"
+        ]
+      }
+    },
+    {
+      "id": "encoder",
+      "text": "编码",
+      "x": 9,
+      "y": 6,
+      "color": "blue",
+      "formula": {
+        "width": 6,
+        "lines": [
+          "H × W × C"
+        ]
+      }
+    },
+    {
+      "id": "down",
+      "text": "下采样",
+      "x": 15,
+      "y": 10,
+      "color": "blue",
+      "formula": {
+        "width": 6,
+        "lines": [
+          "H/2 × W/2 × 2C"
+        ]
+      }
+    },
+    {
+      "id": "core",
+      "text": "特征提取",
+      "x": 21,
+      "y": 10,
+      "color": "purple",
+      "formula": {
+        "width": 6,
+        "lines": [
+          "Z = f(X)"
+        ]
+      }
+    },
+    {
+      "id": "up",
+      "text": "上采样",
+      "x": 27,
+      "y": 10,
+      "color": "purple",
+      "formula": {
+        "width": 6,
+        "lines": [
+          "H × W × C"
+        ]
+      }
+    },
+    {
+      "id": "fuse",
+      "text": "特征拼接",
+      "x": 27,
+      "y": 6,
+      "color": "purple",
+      "formula": {
+        "width": 7,
+        "lines": [
+          "Y = concat(X, Z_{up})"
+        ]
+      }
+    },
+    {
+      "id": "out",
+      "text": "重建输出",
+      "x": 33.5,
+      "y": 3,
+      "color": "purple",
+      "w": 4,
+      "formula": {
+        "width": 6,
+        "lines": [
+          "H × W × 3"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "ie",
+      "from": "input",
+      "to": "encoder",
+      "color": "blue"
+    },
+    {
+      "id": "ed",
+      "from": "encoder",
+      "to": "down",
+      "via": [
+        [
+          12,
+          6
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "color": "blue"
+    },
+    {
+      "id": "dc",
+      "from": "down",
+      "to": "core",
+      "color": "blue"
+    },
+    {
+      "id": "cu",
+      "from": "core",
+      "to": "up",
+      "color": "purple"
+    },
+    {
+      "id": "uf",
+      "from": "up",
+      "to": "fuse",
+      "to_port": "r",
+      "via": [
+        [
+          31,
+          10
+        ],
+        [
+          31,
+          6
+        ]
+      ],
+      "color": "purple"
+    },
+    {
+      "id": "skip",
+      "from": "encoder",
+      "to": "fuse",
+      "from_port": "t",
+      "via": [
+        [
+          9,
+          3
+        ],
+        [
+          22,
+          3
+        ],
+        [
+          22,
+          6
+        ]
+      ],
+      "color": "blue",
+      "label": {
+        "text": "跳跃连接",
+        "x": 16,
+        "y": 3,
+        "w": 3
+      }
+    },
+    {
+      "id": "fo",
+      "from": "fuse",
+      "to": "out",
+      "from_port": "t",
+      "via": [
+        [
+          27,
+          3
+        ]
+      ],
+      "color": "purple"
+    }
+  ]
+}

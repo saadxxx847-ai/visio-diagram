@@ -1,0 +1,6 @@
+interface:
+  display_name: "Visio 结构图"
+  short_description: "在 Windows 后台生成原生可编辑 Visio 结构图和 PNG，并检查公式与连线"
+  default_prompt: "使用 $visio-diagram，依据提供的资料制作结构图，交付原生可编辑 VSDX 和检查后的 PNG。"
+policy:
+  allow_implicit_invocation: true
