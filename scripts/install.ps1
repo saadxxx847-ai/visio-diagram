@@ -11,7 +11,7 @@ foreach ($relative in @('SKILL.md','agents\openai.yaml','scripts\render.py','scr
 $top = & git -C $sourceRoot rev-parse --show-toplevel
 if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($top) -ne $sourceRoot) { throw 'Run from the cloned visio-diagram repository.' }
 $origin = & git -C $sourceRoot remote get-url origin
-if ($LASTEXITCODE -ne 0 -or $origin -notmatch '^(https://github\.com/|git@github\.com:)EvanKKAI/visio-diagram(?:\.git)?/?$') { throw 'Unexpected origin repository.' }
+if ($LASTEXITCODE -ne 0 -or $origin -notmatch '^(https://github\.com/|git@github\.com:)saadxxx847-ai/visio-diagram(?:\.git)?/?$') { throw 'Unexpected origin repository. Expected saadxxx847-ai/visio-diagram; see the README migration instructions for v1.0.0.' }
 $branch = & git -C $sourceRoot branch --show-current
 $commit = & git -C $sourceRoot rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Repository has no commit.' }

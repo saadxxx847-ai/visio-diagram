@@ -3,7 +3,7 @@ param()
 $ErrorActionPreference = 'Stop'
 $sourceRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $origin = & git -C $sourceRoot remote get-url origin
-if ($LASTEXITCODE -ne 0 -or $origin -notmatch '^(https://github\.com/|git@github\.com:)EvanKKAI/visio-diagram(?:\.git)?/?$') { throw 'Unexpected origin repository.' }
+if ($LASTEXITCODE -ne 0 -or $origin -notmatch '^(https://github\.com/|git@github\.com:)saadxxx847-ai/visio-diagram(?:\.git)?/?$') { throw 'Unexpected origin repository. Expected saadxxx847-ai/visio-diagram; see the README migration instructions for v1.0.0.' }
 $status = @(& git -C $sourceRoot status --porcelain)
 if ($LASTEXITCODE -ne 0) { throw 'Could not inspect Git status.' }
 if ($status.Count) { throw 'Local changes exist. Inspect and preserve them before updating.' }

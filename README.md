@@ -17,8 +17,8 @@
 在 PowerShell 中执行；同一仓库只克隆一次：
 
 ```powershell
-$visioSource = Join-Path $env:USERPROFILE '.codex\skill-sources\EvanKKAI\visio-diagram'
-git clone https://github.com/EvanKKAI/visio-diagram.git $visioSource
+$visioSource = Join-Path $env:USERPROFILE '.codex\skill-sources\saadxxx847-ai\visio-diagram'
+git clone https://github.com/saadxxx847-ai/visio-diagram.git $visioSource
 & (Join-Path $visioSource 'scripts\install.ps1')
 ```
 
@@ -60,15 +60,47 @@ python -B (Join-Path $visioSource 'scripts\render.py') render `
 
 ## 更新与后续定制
 
-已安装后，在 PowerShell 执行：
+已安装后，在 PowerShell 执行；从现有目录联接取得源码位置，无须记住安装路径：
 
 ```powershell
+$visioCodexRoot = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
+$visioLink = Get-Item -LiteralPath (Join-Path $visioCodexRoot 'skills\visio-diagram')
+if ($visioLink.LinkType -ne 'Junction') { throw '请先核对技能目录联接。' }
+$visioSource = [string](@($visioLink.Target)[0])
 & (Join-Path $visioSource 'scripts\update.ps1')
 ```
 
 更新脚本先检查工作区、分支和 origin，再获取上游并显示差异；只有可以快进时才更新。存在未提交修改、仅本地提交或分叉时停止，保留现场。更新后核验技能结构、目录联接、远端、分支、commit 和工作区状态。不会强制重置，也不会后台自动更新。
 
 新增要求时，可让 Codex 修改此仓库中的通用组件或规则，并针对改动验证。仅某张图的内容修改留在该图的 JSON 中；稳定、可复用的改进再提交到仓库。`VERSION` 和 Git 标签用于记录正式版本；其他电脑在需要时运行更新脚本获取这些改进。
+
+### 从旧用户名迁移（已安装 v1.0.0）
+
+GitHub 用户名已从 `EvanKKAI` 改为 `saadxxx847-ai`。`v1.0.1` 同步安装地址和脚本来源校验；绘图引擎与风格参考不变。已有源码目录仍叫 `EvanKKAI` 时可以保留，目录联接也无需重建。
+
+旧版更新脚本只接受旧地址，不能仅改 origin 后直接运行它。先按上面的方式取得 `$visioSource`（暂不执行最后一行），然后执行以下一次性迁移。工作区有修改、分支不一致或存在本地提交时会停止，应先保留并核对这些差异。
+
+```powershell
+$visioChanges = @(& git -C $visioSource status --porcelain)
+if ($LASTEXITCODE -ne 0 -or $visioChanges.Count) { throw '请先检查并保留本地修改。' }
+$visioOrigin = & git -C $visioSource remote get-url origin
+if ($LASTEXITCODE -ne 0 -or $visioOrigin -notmatch '^(https://github\.com/|git@github\.com:)(EvanKKAI|saadxxx847-ai)/visio-diagram(?:\.git)?/?$') { throw '请先核对 origin。' }
+$visioBranch = & git -C $visioSource branch --show-current
+if ($LASTEXITCODE -ne 0 -or $visioBranch -ne 'main') { throw '请先核对当前分支。' }
+git -C $visioSource fetch https://github.com/saadxxx847-ai/visio-diagram.git main
+if ($LASTEXITCODE -ne 0) { throw '获取新版失败，未修改工作文件。' }
+$visioCounts = (& git -C $visioSource rev-list --left-right --count 'HEAD...FETCH_HEAD') -split '\s+'
+if ($LASTEXITCODE -ne 0 -or $visioCounts.Count -ne 2 -or [int]$visioCounts[0] -gt 0) { throw '请先核对本地与上游历史。' }
+git -C $visioSource diff --stat 'HEAD..FETCH_HEAD'
+if ($LASTEXITCODE -ne 0) { throw '读取差异失败。' }
+git -C $visioSource remote set-url origin https://github.com/saadxxx847-ai/visio-diagram.git
+if ($LASTEXITCODE -ne 0) { throw '更新 origin 失败。' }
+git -C $visioSource merge --ff-only FETCH_HEAD
+if ($LASTEXITCODE -ne 0) { throw '快进失败，请保留现场并检查。' }
+& (Join-Path $visioSource 'scripts\update.ps1')
+```
+
+迁移后仍从原目录使用技能；后续按常规更新步骤执行即可。
 
 ## 验证与边界
 
