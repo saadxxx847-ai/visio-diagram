@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "page": {
+    "width": 21,
+    "height": 8.8
+  },
+  "title": "Two-branch transform",
+  "style": {
+    "font": "Arial",
+    "node_pt": 28
+  },
+  "regions": [
+    {
+      "id": "formula_rule",
+      "x": 10.5,
+      "y": 5.46,
+      "w": 18.5,
+      "h": 0.015
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "text": "X",
+      "x": 2.25,
+      "y": 3.34,
+      "w": 1.4,
+      "color": "ink",
+      "fill": "white"
+    },
+    {
+      "id": "fork",
+      "text": "",
+      "x": 4.62,
+      "y": 3.34,
+      "w": 0.09,
+      "h": 0.09,
+      "shape": "ellipse",
+      "color": "ink",
+      "fill": "ink"
+    },
+    {
+      "id": "transform_f",
+      "text": "F(x)",
+      "x": 8.1,
+      "y": 2.24,
+      "w": 2.2,
+      "color": "blue"
+    },
+    {
+      "id": "transform_g",
+      "text": "G(x)",
+      "x": 8.1,
+      "y": 4.44,
+      "w": 2.2,
+      "color": "green"
+    },
+    {
+      "id": "sum",
+      "text": "+",
+      "x": 14.71,
+      "y": 3.34,
+      "w": 0.72,
+      "h": 0.72,
+      "shape": "ellipse",
+      "color": "ink"
+    },
+    {
+      "id": "output",
+      "text": "Y",
+      "x": 18.7,
+      "y": 3.34,
+      "w": 1.4,
+      "color": "ink",
+      "fill": "white"
+    }
+  ],
+  "edges": [
+    {
+      "id": "read",
+      "from": "input",
+      "to": "fork",
+      "color": "ink",
+      "arrow": false
+    },
+    {
+      "id": "f_input",
+      "from": "fork",
+      "to": "transform_f",
+      "from_port": "t",
+      "via": [
+        [
+          4.62,
+          2.24
+        ]
+      ],
+      "color": "blue"
+    },
+    {
+      "id": "g_input",
+      "from": "fork",
+      "to": "transform_g",
+      "from_port": "b",
+      "via": [
+        [
+          4.62,
+          4.44
+        ]
+      ],
+      "color": "green"
+    },
+    {
+      "id": "f_output",
+      "from": "transform_f",
+      "to": "sum",
+      "to_port": "t",
+      "via": [
+        [
+          14.71,
+          2.24
+        ]
+      ],
+      "color": "blue",
+      "label": {
+        "text": "F(X)",
+        "x": 11.8,
+        "y": 2.24,
+        "w": 1.2
+      }
+    },
+    {
+      "id": "g_output",
+      "from": "transform_g",
+      "to": "sum",
+      "to_port": "b",
+      "via": [
+        [
+          14.71,
+          4.44
+        ]
+      ],
+      "color": "green",
+      "label": {
+        "text": "G(X)",
+        "x": 11.8,
+        "y": 4.44,
+        "w": 1.2
+      }
+    },
+    {
+      "id": "write",
+      "from": "sum",
+      "to": "output",
+      "color": "ink"
+    }
+  ],
+  "texts": [
+    {
+      "id": "formulas",
+      "text": "Formulas",
+      "x": 4.25,
+      "y": 6.06,
+      "w": 6,
+      "h": 0.66,
+      "size": 31,
+      "align": 0,
+      "bold": true,
+      "math": false,
+      "color": "ink"
+    },
+    {
+      "id": "f",
+      "text": "F(x) = x^{2}",
+      "x": 4.25,
+      "y": 6.93,
+      "w": 6,
+      "h": 0.58,
+      "size": 26,
+      "align": 0,
+      "color": "ink"
+    },
+    {
+      "id": "g",
+      "text": "G(x) = max(x, 0)",
+      "x": 4.25,
+      "y": 7.68,
+      "w": 6,
+      "h": 0.58,
+      "size": 26,
+      "align": 0,
+      "color": "ink"
+    },
+    {
+      "id": "y",
+      "text": "Y_{i} = F(X_{i}) + G(X_{i})",
+      "x": 14.12,
+      "y": 6.93,
+      "w": 8.0,
+      "h": 0.58,
+      "size": 26,
+      "align": 0,
+      "color": "ink"
+    }
+  ]
+}

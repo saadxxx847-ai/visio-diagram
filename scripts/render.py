@@ -201,7 +201,7 @@ class Renderer:
         for i,(x,y) in enumerate(pts):
             r=s.AddRow(10,-1,138 if i==0 else 139)
             s.CellsSRC(10,r,0).FormulaU=f'{x-left} in';s.CellsSRC(10,r,1).FormulaU=f'{cy-y} in'
-        for k,v in {'LineColor':self.color('ink'),'LineWeight':'1.2 pt','BeginArrow':0,'EndArrow':0,'FillPattern':0}.items(): cell(s,k,v)
+        for k,v in {'LineColor':self.color('ink'),'LinePattern':1,'LineWeight':'1.2 pt','BeginArrow':0,'EndArrow':0,'FillPattern':0}.items(): cell(s,k,v)
         self.anchor(s,parent,(left+right)/2-cx,cy-(self.h-parent.CellsU('PinY').ResultIU))
         self.front.append(s)
         return s
@@ -216,16 +216,26 @@ class Renderer:
             height=line.get('height',1.0 if 'parts' in line else .65)
             if height<=0: raise ValueError('Invalid formula line height')
             lines.append((line,size,height))
-        width=f.get('width',n.get('w',4.5)+1.5);height=sum(q[2] for q in lines)
-        top=n['y']+n.get('h',.84)/2+f.get('gap',.18);cy=top+height/2
+        placement=f.get('placement','below')
+        if placement not in ('inside','below'):
+            raise ValueError('Unknown formula placement: '+str(placement))
+        inside=placement=='inside'
+        node_width,node_height=n.get('w',4.5),n.get('h',.84)
+        width=f.get('width',node_width-.14 if inside else node_width+1.5)
+        height=sum(q[2] for q in lines)
+        if inside and (n['text'] or n.get('shape','rect')!='rect' or width>node_width-.08 or height>node_height-.06):
+            raise ValueError('Inside formula needs an empty rectangle with room for all rows: '+n['id'])
+        top=n['y']-height/2 if inside else n['y']+node_height/2+f.get('gap',.18)
+        cy=top+height/2
         anchor=self.text('Formula_'+n['id'],'',n['x'],cy,width,height,record=False)
         self.anchor(anchor,parent,0,cy-n['y'])
-        children=[];cursor=top
+        children=[];roots=[];cursor=top
         for li,(line,size,lh) in enumerate(lines):
             yy=cursor+lh/2;cursor+=lh;key=f'Math_{n["id"]}_{li}'
             def add_text(suffix,value,x,y,w,h,pt):
                 s=self.text(key+suffix,value,x,y,w,h,size=pt,color=line.get('color','ink'),owner=n['id'],kind='formula')
                 self.anchor(s,anchor,x-n['x'],y-cy);children.append(s.ID)
+                return s.ID
             if 'text' in line:
                 add_text('',line['text'],n['x'],yy,width,lh,size);continue
             measured=[]
@@ -251,11 +261,13 @@ class Renderer:
                     s=self.rule(key+pk+'_bar',[(xx,yy),(xx+pw,yy)],anchor,n['x'],yy,n['id']);children.append(s.ID)
                 else:
                     rw=.28*scale
-                    add_text(pk,part['sqrt'],xx+rw+(pw-rw)/2,yy,pw-rw,lh,size)
+                    radicand=add_text(pk,part['sqrt'],xx+rw+(pw-rw)/2,yy,pw-rw,lh,size)
                     pts=[(xx,yy+.04*scale),(xx+.075*scale,yy-.025*scale),(xx+.14*scale,yy+.18*scale),(xx+rw,yy-.235*scale),(xx+pw,yy-.235*scale)]
                     s=self.rule(key+pk+'_root',pts,anchor,n['x'],yy,n['id']);children.append(s.ID)
+                    roots.append(dict(rule=s.ID,radicand=radicand,points=[[x-xx,yy-y] for x,y in pts]))
                 xx+=pw+gap
-        self.formulas[n['id']]=dict(id=anchor.ID,children=children,box=box(n['x'],cy,width,height))
+        self.formulas[n['id']]=dict(id=anchor.ID,children=children,box=box(n['x'],cy,width,height),
+                                   placement=placement,roots=roots)
 
     def node(self,n):
         x,y,w,h=n['x'],n['y'],n.get('w',4.5),n.get('h',.84)
@@ -368,15 +380,18 @@ def audit(doc,manifest,vsdx):
     height=manifest['spec']['page']['height']
     for o in manifest['objects']:
         s=page.Shapes.ItemFromID(o['id'])
-        if s.Text!=o['text']: errors.append('Text differs from manifest: '+o['name'])
+        actual_text=s.Text
+        if actual_text!=o['text']: errors.append('Text differs from manifest: '+o['name'])
         actual=box(s.CellsU('PinX').ResultIU,height-s.CellsU('PinY').ResultIU,s.CellsU('Width').ResultIU,s.CellsU('Height').ResultIU)
         if any(abs(a-b)>.005 for a,b in zip(actual,o['box'])): errors.append('Geometry differs from manifest: '+o['name'])
-        for k,expr in [('TextHeight','TEXTHEIGHT(TheText,TxtWidth)'),('TextWidth','TEXTWIDTH(TheText)')]:
-            if not s.CellExistsU('User.'+k,0): s.AddNamedRow(242,k,0)
-            cell(s,'User.'+k,expr)
-        th=s.CellsU('User.TextHeight').ResultIU;tw=s.CellsU('User.TextWidth').ResultIU
+        th=tw=0.
+        if actual_text:
+            for k,expr in [('TextHeight','TEXTHEIGHT(TheText,TxtWidth)'),('TextWidth','TEXTWIDTH(TheText)')]:
+                if not s.CellExistsU('User.'+k,0): s.AddNamedRow(242,k,0)
+                cell(s,'User.'+k,expr)
+            th=s.CellsU('User.TextHeight').ResultIU;tw=s.CellsU('User.TextWidth').ResultIU
         ah=s.CellsU('TxtHeight').ResultIU;aw=s.CellsU('TxtWidth').ResultIU
-        ok=th<=ah+.025 and ('\n' in s.Text or tw<=aw+.025)
+        ok=th<=ah+.025 and ('\n' in actual_text or tw<=aw+.025)
         fits.append(dict(name=o['name'],height=ah,required_height=th,width=aw,required_width=tw,fits=ok))
         if not ok: errors.append('Text overflow: '+o['name'])
     for e in manifest['edges']:
@@ -396,11 +411,38 @@ def audit(doc,manifest,vsdx):
                     errors.append('Saved connector route differs: '+e['key']);break
     for key,f in manifest['formulas'].items():
         node=page.Shapes.ItemFromID(manifest['nodes'][key]['id']);anchor=page.Shapes.ItemFromID(f['id'])
-        if anchor.CellsU('PinY').ResultIU+anchor.CellsU('Height').ResultIU/2>=node.CellsU('PinY').ResultIU-node.CellsU('Height').ResultIU/2:
+        if f.get('placement','below')=='inside':
+            for pos,dim in [('PinX','Width'),('PinY','Height')]:
+                clearance=(node.CellsU(dim).ResultIU-anchor.CellsU(dim).ResultIU)/2
+                if abs(node.CellsU(pos).ResultIU-anchor.CellsU(pos).ResultIU)>clearance+.005:
+                    errors.append('Formula outside its node: '+key)
+        elif anchor.CellsU('PinY').ResultIU+anchor.CellsU('Height').ResultIU/2>=node.CellsU('PinY').ResultIU-node.CellsU('Height').ResultIU/2:
             errors.append('Formula not below node: '+key)
         refs=(f'Sheet.{node.ID}!'.lower(),(node.NameU+'!').lower())
         if not all(any(ref in anchor.CellsU(c).FormulaU.lower() for ref in refs) for c in ('PinX','PinY')):
             errors.append('Formula anchor not associated: '+key)
+        for root in f.get('roots',[]):
+            rule=page.Shapes.ItemFromID(root['rule'])
+            radicand=page.Shapes.ItemFromID(root['radicand'])
+            expected=root['points']
+            if rule.RowCount(10)-1 != len(expected):
+                errors.append('Radical geometry is incomplete: '+key)
+                continue
+            actual=[tuple(rule.CellsSRC(10,i,col).ResultIU for col in (0,1))
+                    for i in range(1,len(expected)+1)]
+            left=rule.CellsU('PinX').ResultIU-rule.CellsU('LocPinX').ResultIU
+            center=radicand.CellsU('PinX').ResultIU
+            half_width=radicand.CellsU('Width').ResultIU/2
+            start,end=actual[-2:]
+            if (rule.CellsU('LinePattern').ResultIU!=1 or rule.CellsU('LineWeight').ResultIU<=0
+                or abs(rule.CellsU('Angle').ResultIU)>1e-5
+                or any(abs(a-b)>1e-5 for p,q in zip(actual,expected) for a,b in zip(p,q))
+                or abs(start[1]-end[1])>1e-5
+                or left+start[0]>center-half_width+1e-5
+                or left+end[0]<center+half_width-1e-5
+                or rule.CellsU('PinY').ResultIU-rule.CellsU('LocPinY').ResultIU+end[1]
+                   <= radicand.CellsU('PinY').ResultIU):
+                errors.append('Radical bar does not cover the radicand: '+key)
     # Exercise every node without saving, including all math components and edges.
     for key,n in manifest['nodes'].items():
         node=page.Shapes.ItemFromID(n['id']);x=node.CellsU('PinX').ResultIU;y=node.CellsU('PinY').ResultIU
@@ -420,7 +462,7 @@ def audit(doc,manifest,vsdx):
         if not ok: errors.append('Components/endpoints do not follow moved node: '+key)
     with zipfile.ZipFile(vsdx) as z:
         if any(n.startswith('visio/media/') for n in z.namelist()) or b'<ForeignData' in z.read('visio/pages/page1.xml'): errors.append('Embedded raster or foreign object')
-    return dict(reopened=True,errors=sorted(set(errors)),warnings=warnings,text_checks=fits,movement_checks=moved,native_nodes=len(manifest['nodes']),glued_flow_connectors=len(manifest['edges']),visual_review='REQUIRED: inspect the exported PNG separately')
+    return dict(reopened=True,errors=sorted(set(errors)),warnings=warnings,text_checks=fits,movement_checks=moved,native_nodes=len(manifest['nodes']),glued_flow_connectors=len(manifest['edges']))
 
 
 def application():
@@ -434,6 +476,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     sub.add_parser('probe')
     p=sub.add_parser('render');p.add_argument('spec');p.add_argument('--output',required=True);p.add_argument('--overwrite',action='store_true')
+    p.add_argument('--png',action='store_true',help='Also export a PNG when explicitly requested')
     p=sub.add_parser('verify');p.add_argument('vsdx');p.add_argument('--manifest',required=True)
     args=parser.parse_args();app=None;doc=None
     try:
@@ -444,7 +487,8 @@ def main():
         if args.command=='render':
             spec=read_json(args.spec);validate_spec(spec);dest=Path(args.output).resolve()
             if dest.suffix.lower()!='.vsdx': raise ValueError('Output must end in .vsdx')
-            paths=[dest,dest.with_suffix('.png'),dest.with_suffix('.manifest.json'),dest.with_suffix('.audit.json')]
+            paths=[dest,dest.with_suffix('.manifest.json'),dest.with_suffix('.audit.json')]
+            if args.png: paths.append(dest.with_suffix('.png'))
             if not args.overwrite and any(p.exists() for p in paths): raise FileExistsError('Choose a new output stem or explicitly pass --overwrite')
             dest.parent.mkdir(parents=True,exist_ok=True)
             app=application();renderer=Renderer(app,spec);doc=renderer.doc
@@ -452,17 +496,22 @@ def main():
             manifest['source_spec_sha256']=sha(args.spec);manifest['vsdx_sha256']=sha(dest)
             write_json(dest.with_suffix('.manifest.json'),manifest)
             doc=app.Documents.OpenEx(str(dest),64+128)
-            dpi=spec.get('export',{}).get('dpi',120)
-            app.Settings.SetRasterExportResolution(3,dpi,dpi,0)
-            app.Settings.SetRasterExportSize(2,round(spec['page']['width']*dpi),round(spec['page']['height']*dpi),0)
-            png=dest.with_suffix('.png');doc.Pages.Item(1).Export(str(png))
+            files=[dest]
+            if args.png:
+                dpi=spec.get('export',{}).get('dpi',120)
+                dims=(round(spec['page']['width']*dpi),round(spec['page']['height']*dpi))
+                app.Settings.SetRasterExportResolution(3,dpi,dpi,0)
+                app.Settings.SetRasterExportSize(2,*dims,0)
+                png=dest.with_suffix('.png');doc.Pages.Item(1).Export(str(png))
+                files.append(png)
             report=audit(doc,manifest,dest)
-            with png.open('rb') as stream:
-                header=stream.read(24)
-            dims=struct.unpack('>II',header[16:24]);expected=(round(spec['page']['width']*dpi),round(spec['page']['height']*dpi))
-            if header[:8]!=b'\x89PNG\r\n\x1a\n' or dims!=expected: report['errors'].append('PNG size/signature mismatch')
-            report['png_pixels']=dims
-            report['files']={p.name:dict(bytes=p.stat().st_size,sha256=sha(p)) for p in (dest,png)}
+            if args.png:
+                with png.open('rb') as stream:
+                    header=stream.read(24)
+                actual_dims=struct.unpack('>II',header[16:24]) if len(header)==24 else ()
+                if header[:8]!=b'\x89PNG\r\n\x1a\n' or actual_dims!=dims: report['errors'].append('PNG size/signature mismatch')
+                report['png_pixels']=actual_dims
+            report['files']={p.name:dict(bytes=p.stat().st_size,sha256=sha(p)) for p in files}
         else:
             dest=Path(args.vsdx).resolve();manifest=read_json(args.manifest);app=application();doc=app.Documents.OpenEx(str(dest),64+128)
             report=audit(doc,manifest,dest)

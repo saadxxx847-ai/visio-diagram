@@ -1,8 +1,8 @@
 # visio-diagram
 
-在 Windows 后台使用 Visio COM，将结构说明生成**原生可编辑的 `.vsdx` 和由同一文件导出的 PNG**。用于流程图、算法图、网络结构图和系统架构图。
+在 Windows 后台使用 Visio COM，将结构说明生成**原生可编辑的 `.vsdx`**。用于流程图、算法图、网络结构图和系统架构图。
 
-包含 Codex Skill、可复用绘图/检查脚本、三种可运行布局示例和已验收的风格参考。当前版本见 [VERSION](VERSION)。
+包含 Codex Skill、可复用绘图/检查脚本、四种可运行布局示例和已验收的风格参考。当前版本见 [VERSION](VERSION)。
 
 ## 环境要求
 
@@ -36,11 +36,11 @@ python -B (Join-Path $visioSource 'scripts\render.py') probe
 
 在 Codex 中提供源码、流程说明或参考图，并说明目标用途：
 
-> 使用 $visio-diagram，依据这个项目画结构图，沿用我的组会风格，交付原生可编辑 Visio 和 PNG。
+> 使用 $visio-diagram，依据这个项目画结构图，沿用我的组会风格，交付原生可编辑 Visio。
 
 允许按任务自动选用，也支持显式调用。若当前对话尚未识别新安装的技能，可在新对话中调用。
 
-默认一框一动作（模块图按一致的模块层级）、公式放在框下、分区配色、优先留白和调整走线。内容与绘图代码分离，每张图保留独立 JSON 配置。具体算法、机器连接和实验参数不写死在通用引擎中。
+算法图和含公式的流程默认交付两份可编辑 VSDX。主流程版突出数据走向，长公式放在同页的 Formulas 区。逐框讲解版把完整公式放在对应操作框下。同一次计算的中间项留在完整公式里。每份图保留独立 JSON 配置。
 
 ## 独立运行示例
 
@@ -50,11 +50,12 @@ python -B (Join-Path $visioSource 'scripts\render.py') render `
   --output '.\out\branch-fusion.vsdx'
 ```
 
-输出 VSDX、PNG、manifest 和 audit。修改时优先使用新文件名；明确要覆盖同名输出时加 `--overwrite`。
+交付 VSDX。manifest 和 audit 留作复核记录。修改时优先使用新文件名；明确要覆盖同名输出时加 `--overwrite`。
 
 - [分支融合](assets/examples/branch-fusion.json)：根号、分式、旁路、汇合。
 - [跳跃连接网络](assets/examples/skip-network.json)：主干、跳连、张量标注。
 - [分层系统](assets/examples/layered-system.json)：容器、跨层路由、跨线桥。
+- [页底公式区](assets/examples/formulas-below.json)用英文函数与符号组成主图，完整公式集中在同页下方。
 
 配置字段和公式能力见 [spec.md](references/spec.md)，视觉规则见 [design.md](references/design.md)。
 
@@ -104,11 +105,11 @@ if ($LASTEXITCODE -ne 0) { throw '快进失败，请保留现场并检查。' }
 
 ## 验证与边界
 
-保存后重新打开实际 VSDX，检查原生文本、边界/遮挡、连接线双端吸附、保存后的走线、公式归属，以及移动节点后公式和端点是否随动。PNG 从重新打开的文件导出。
+保存后重新打开实际 VSDX，检查原生文本、边界/遮挡、连接线双端吸附、保存后的走线、公式位置、根号覆盖范围，以及移动节点后公式和端点是否随动。
 
 仍需查看整图与关键局部，核对算法依据和表达是否正确。引擎不自动理解源码，也不自动解决任意布局；复杂嵌套公式需要扩展原生组件。
 
-先将三个示例渲染到同一个专用测试目录（文件名对应各自示例），再运行：
+将分支融合、跳跃连接网络和分层系统渲染到同一个专用测试目录，文件名对应各自示例，然后运行以下检查。
 
 ```powershell
 python -B (Join-Path $visioSource 'scripts\check_engine.py') '.\test-output'

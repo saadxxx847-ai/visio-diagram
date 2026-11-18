@@ -48,16 +48,27 @@ def main():
         # Exercise the third supported primitive without adding another packaged layout.
         spec={'version':1,'page':{'width':14,'height':8},'title':'原生菱形检查',
               'nodes':[{'id':'decision','text':'判断','x':4,'y':3.5,'w':4,'h':2,'shape':'diamond','formula':{'width':4,'lines':['x > 0']}},
-                       {'id':'done','text':'输出','x':10,'y':3.5,'w':3.5,'h':1.2,'shape':'ellipse'}],
-              'edges':[{'id':'yes','from':'decision','to':'done','label':{'text':'是','x':7.1,'y':3.5,'w':.8}}]}
+                       {'id':'done','text':'输出','x':10,'y':3.5,'w':3.5,'h':1.2,'shape':'ellipse'},
+                       {'id':'root','text':'','x':10,'y':5.6,'w':3.,'h':.74,
+                        'formula':{'placement':'inside','lines':[{'parts':[{'text':'1 −'},{'sqrt':'1 − x'}],'height':.62}]}}],
+              'edges':[{'id':'yes','from':'decision','to':'done','label':{'text':'是','x':7.1,'y':3.5,'w':.8}},
+                       {'id':'root_input','from':'done','to':'root','from_port':'b','to_port':'t'}]}
         renderer=Renderer(app,spec);doc=renderer.doc;manifest=renderer.draw()
         path=out/'shape-check.vsdx';doc.SaveAs(str(path));doc.Close();doc=None
         doc=app.Documents.OpenEx(str(path),64+128)
-        app.Settings.SetRasterExportResolution(3,120,120,0);app.Settings.SetRasterExportSize(2,1680,960,0)
-        doc.Pages.Item(1).Export(str(path.with_suffix('.png')))
+        original_hash=sha(path)
         result=audit(doc,manifest,path);assert not result['errors'],result['errors']
         report['positive']['diamond_and_ellipse']={'passed':True}
         write_json(path.with_suffix('.audit.json'),result)
+        report['positive']['inline_radical']={'passed':True}
+        root=manifest['formulas']['root']['roots'][0]
+        rule=doc.Pages.Item(1).Shapes.ItemFromID(root['rule'])
+        rule.DeleteRow(10,rule.RowCount(10)-1)
+        bad=audit(doc,manifest,path)
+        assert 'Radical geometry is incomplete: root' in bad['errors'],bad['errors']
+        report['negative']['missing_radical_bar_detected']=True
+        doc.Saved=True;doc.Close();doc=None
+        assert sha(path)==original_hash
     finally:
         if doc is not None: doc.Saved=True;doc.Close()
         app.Quit()
